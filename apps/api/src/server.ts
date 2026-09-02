@@ -1,26 +1,49 @@
 import { createApp } from "./app.js";
-
-const DEFAULT_PORT = 4000;
-
-const port = Number(process.env.PORT ?? DEFAULT_PORT);
+import { environment } from "./config/environment.js";
+import { logger } from "./lib/logger.js";
 
 const app = createApp();
 
-const server = app.listen(port, () => {
-  console.log(`CineFlow API listening on port ${port}`);
+const server = app.listen(environment.PORT, environment.HOST, () => {
+  logger.info(
+    {
+      host: environment.HOST,
+      port: environment.PORT,
+    },
+    "CineFlow API listening",
+  );
 });
 
+let isShuttingDown = false;
+
 const shutdown = (signal: NodeJS.Signals): void => {
-  console.log(`Received ${signal}. Shutting down CineFlow API.`);
+  if (isShuttingDown) {
+    return;
+  }
+
+  isShuttingDown = true;
+
+  logger.info(
+    {
+      signal,
+    },
+    "CineFlow API shutdown initiated",
+  );
 
   server.close((error) => {
     if (error) {
-      console.error("Failed to close the CineFlow HTTP server cleanly.", error);
+      logger.error(
+        {
+          err: error,
+        },
+        "Failed to close CineFlow HTTP server cleanly",
+      );
+
       process.exitCode = 1;
       return;
     }
 
-    console.log("CineFlow API shutdown complete.");
+    logger.info("CineFlow API shutdown complete");
     process.exitCode = 0;
   });
 };

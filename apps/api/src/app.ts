@@ -1,25 +1,40 @@
 import express, { type Express } from "express";
 
-export const createApp = (): Express => {
+import { defaultReadinessProbe, type ReadinessProbe } from "./health/readiness.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import { notFoundMiddleware } from "./middleware/not-found.js";
+import { requestIdMiddleware } from "./middleware/request-id.js";
+import { requestLoggerMiddleware } from "./middleware/request-logger.js";
+import { createSystemRouter } from "./routes/system.js";
+
+export interface CreateAppOptions {
+  readinessProbe?: ReadinessProbe;
+}
+
+export const createApp = (options: CreateAppOptions = {}): Express => {
   const app = express();
+
+  const readinessProbe = options.readinessProbe ?? defaultReadinessProbe;
 
   app.disable("x-powered-by");
 
-  app.use(express.json());
+  app.use(requestIdMiddleware);
+  app.use(requestLoggerMiddleware);
 
-  app.get("/health", (_request, response) => {
-    response.status(200).json({
-      status: "ok",
-      service: "cineflow-api",
-    });
-  });
+  app.use(
+    express.json({
+      limit: "1mb",
+    }),
+  );
 
-  app.get("/ready", (_request, response) => {
-    response.status(200).json({
-      status: "ready",
-      service: "cineflow-api",
-    });
-  });
+  app.use(
+    createSystemRouter({
+      readinessProbe,
+    }),
+  );
+
+  app.use(notFoundMiddleware);
+  app.use(errorHandler);
 
   return app;
 };

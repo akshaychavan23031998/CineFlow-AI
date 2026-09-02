@@ -2,11 +2,30 @@ import eslint from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
-const nodeTypeScriptFiles = [
+const nodeSourceTypeScriptFiles = [
   "apps/api/src/**/*.ts",
   "apps/media-worker/src/**/*.ts",
   "packages/*/src/**/*.ts",
 ];
+
+const nodeTestTypeScriptFiles = ["apps/api/test/**/*.ts"];
+
+const nodeTypeScriptFiles = [...nodeSourceTypeScriptFiles, ...nodeTestTypeScriptFiles];
+
+const strictTypeScriptRules = {
+  "@typescript-eslint/consistent-type-imports": [
+    "error",
+    {
+      prefer: "type-imports",
+      fixStyle: "inline-type-imports",
+    },
+  ],
+
+  "@typescript-eslint/no-explicit-any": "error",
+  "@typescript-eslint/no-floating-promises": "error",
+  "@typescript-eslint/no-misused-promises": "error",
+  "@typescript-eslint/require-await": "error",
+};
 
 export default tseslint.config(
   {
@@ -33,7 +52,7 @@ export default tseslint.config(
   })),
 
   {
-    files: nodeTypeScriptFiles,
+    files: nodeSourceTypeScriptFiles,
 
     languageOptions: {
       globals: {
@@ -46,19 +65,23 @@ export default tseslint.config(
       },
     },
 
-    rules: {
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        {
-          prefer: "type-imports",
-          fixStyle: "inline-type-imports",
-        },
-      ],
+    rules: strictTypeScriptRules,
+  },
 
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/no-misused-promises": "error",
-      "@typescript-eslint/require-await": "error",
+  {
+    files: nodeTestTypeScriptFiles,
+
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+
+      parserOptions: {
+        project: ["./apps/api/tsconfig.test.json"],
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
+
+    rules: strictTypeScriptRules,
   },
 );
