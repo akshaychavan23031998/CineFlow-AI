@@ -1,0 +1,101 @@
+name: cineflow-ai
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+    volumes:
+      - cineflow_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    networks:
+      - cineflow
+
+  mongodb:
+    image: mongo:8.0
+    restart: unless-stopped
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+
+    volumes:
+      - cineflow_mongodb_data:/data/db
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--username",
+          "${MONGO_ROOT_USERNAME}",
+          "--password",
+          "${MONGO_ROOT_PASSWORD}",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    networks:
+      - cineflow
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    command:
+      - sh
+      - -c
+      - exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"
+
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+    volumes:
+      - cineflow_redis_data:/data
+
+    healthcheck:
+      test: ["CMD-SHELL", 'redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+    networks:
+      - cineflow
+
+networks:
+  cineflow:
+    driver: bridge
+
+volumes:
+  cineflow_postgres_data:
+  cineflow_mongodb_data:
+  cineflow_redis_data:

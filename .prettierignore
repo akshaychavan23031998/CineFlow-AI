@@ -1,0 +1,25 @@
+node_modules
+.pnpm-store
+
+.next
+out
+dist
+build
+.turbo
+
+coverage
+playwright-report
+test-results
+blob-report
+reports
+
+pnpm-lock.yaml
+
+generated
+uploads
+downloads
+
+# Product and architecture source-of-truth documents are intentionally
+# not mass-reformatted by application tooling.
+AGENTS.md
+docs/**

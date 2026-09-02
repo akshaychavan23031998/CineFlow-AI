@@ -1,0 +1,24 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+engineStrict: true
+strictPeerDependencies: true
+autoInstallPeers: true
+
+preferWorkspacePackages: true
+linkWorkspacePackages: true
+sharedWorkspaceLockfile: true
+
+verifyStoreIntegrity: true
+
+# Save newly added dependencies without ^ or ~ ranges.
+savePrefix: ""
+
+# Dependency install scripts are denied unless explicitly reviewed.
+strictDepBuilds: true
+
+# Explicitly reviewed native/install-script dependencies.
+allowBuilds:
+  unrs-resolver: true
+  esbuild: true
