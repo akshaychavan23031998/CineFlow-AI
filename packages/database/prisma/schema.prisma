@@ -1,0 +1,90 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  engineType          = "client"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum ExternalIdentityProvider {
+  GOOGLE
+}
+
+enum AuthSessionRevocationReason {
+  LOGOUT
+  ROTATED
+  REUSE_DETECTED
+  ADMIN_REVOKED
+  ACCOUNT_DISABLED
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique @db.VarChar(320)
+  passwordHash String?    @map("password_hash")
+  displayName  String     @map("display_name") @db.VarChar(120)
+  status       UserStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  externalIdentities ExternalIdentity[]
+  authSessions       AuthSession[]
+
+  @@map("users")
+}
+
+model ExternalIdentity {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider        ExternalIdentityProvider
+  providerSubject String                   @map("provider_subject") @db.VarChar(255)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([provider, providerSubject])
+  @@index([userId])
+  @@map("external_identities")
+}
+
+model AuthSession {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  familyId         String @map("family_id") @db.Uuid
+  refreshTokenHash String @unique @map("refresh_token_hash") @db.VarChar(64)
+
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz(3)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  revocationReason AuthSessionRevocationReason? @map("revocation_reason")
+
+  replacedBySessionId String?      @unique @map("replaced_by_session_id") @db.Uuid
+  replacedBySession   AuthSession? @relation("AuthSessionRotation", fields: [replacedBySessionId], references: [id], onDelete: SetNull)
+  replacesSession     AuthSession? @relation("AuthSessionRotation")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@index([userId, revokedAt])
+  @@map("auth_sessions")
+}

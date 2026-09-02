@@ -36,6 +36,7 @@ export default tseslint.config(
       "**/build/**",
       "**/coverage/**",
       "**/.turbo/**",
+      "**/generated/**",
       "**/*.tsbuildinfo",
       "docs/**",
     ],

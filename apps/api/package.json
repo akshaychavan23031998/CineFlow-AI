@@ -17,11 +17,16 @@
   },
   "dependencies": {
     "@cineflow/config": "workspace:*",
+    "@cineflow/database": "workspace:*",
     "@cineflow/logger": "workspace:*",
+    "argon2": "0.45.1",
+    "cookie-parser": "1.4.7",
     "dotenv": "17.4.2",
-    "express": "5.2.1"
+    "express": "5.2.1",
+    "jose": "6.2.10"
   },
   "devDependencies": {
+    "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.6",
     "@types/node": "22.20.1",
     "@types/supertest": "7.2.1",

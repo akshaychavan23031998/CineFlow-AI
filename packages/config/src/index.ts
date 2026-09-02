@@ -12,6 +12,8 @@ const apiEnvironmentSchema = z.object({
   HOST: z.string().trim().min(1).default("0.0.0.0"),
 
   LOG_LEVEL: logLevelSchema.default("info"),
+
+  DATABASE_URL: z.string().trim().min(1).optional(),
 });
 
 export type NodeEnvironment = z.infer<typeof nodeEnvironmentSchema>;
